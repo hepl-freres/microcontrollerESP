@@ -4,6 +4,7 @@ import urequests, ujson #on importe les librairie pour le http
 from machine import Pin #on importe Pin de la librairie machine
 import time
 
+# port 
 portTCP  = 2565;
 portUDP  = 2563;
 IPserveur = '192.168.2.106'; #adresse ip ordi
