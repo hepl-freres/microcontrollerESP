@@ -14,9 +14,9 @@ IPserveur = '192.168.2.106'; #adresse ip ordi
 
 
 
-#led = Pin(2, Pin.OUT) #on configure la pin 16 comme sortie (la où est connecté la led)
 
-#Connexion au  WIFI
+
+#Connexion  WIFI
 
 SSID = 'electroProjectWifi' #nom du wifi
 PASSWORD = 'M13#MRSE'       #mdp du wifi
