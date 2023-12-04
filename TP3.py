@@ -1,17 +1,20 @@
-import network   #on importe la librairie network 
-import usocket as socket
-import urequests, ujson #on importe les librairie pour le http 
-from machine import Pin #on importe Pin de la librairie machine
-import time
 
-# port 
+import usocket as socket
+import network   #on importe la librairie network 
+import machine #on importe Pin de la librairie machine
+import urequests, ujson #on importe les librairie pour le http 
+import time
+pin = machine.Pin(2, machine.Pin.OUT) #définition du pin de la led
+
+
+# port utilisé 
 portTCP  = 2565;
 portUDP  = 2563;
 IPserveur = '192.168.2.106'; #adresse ip ordi
 
 
 
-led = Pin(2, Pin.OUT) #on configure la pin 16 comme sortie (la où est connecté la led)
+#led = Pin(2, Pin.OUT) #on configure la pin 16 comme sortie (la où est connecté la led)
 
 #Connexion au  WIFI
 
@@ -22,56 +25,63 @@ PASSWORD = 'M13#MRSE'       #mdp du wifi
 wlan = network.WLAN(network.STA_IF) #Creer un objet WLAN et l'initialise
 wlan.active(True)           #Permet d'activer la connexion
 
-if not wlan.isconnected():  #si on est pas conneccté au wifi
-    print('Connecting to Wi-Fi...')  #affiche qu'on se connecte
+if not wlan.isconnected():  #si pas connecté
     wlan.connect(SSID, PASSWORD)     #se connecte au wifi en utilisant ssid et WiFi_pass
-    while not wlan.isconnected():    #boucle tant qu'on est pas connecté
+    while not wlan.isconnected():    #boucle tant que la connection n'est pas établit 
         pass
     
-print('connecte au wifi', SSID)   #affiche qu'on se connecte
-
-#Pret à recevoir des données
-
-led.value(0)    
+print('connectée', SSID)   #affiche qu'on se connecte
 
 
-def envoieTCP(data):
-    s = socket.socket()
-    addr = socket.getaddrinfo(IPserveur, portTCP)[0][-1]
-    print(addr)
-    print(data)
-    s.connect(addr)
-    s.write(str(data).encode())
+
+  
+pin.value(0) # allume la led
+
+def envoieTCP(data):  #fonction d'envoie TCP
+    s = socket.socket() #crée un objet socket
+    # ci-dessous recherche les info de l'IP et le port du seveur
+    # ça renvoie une liste d'informations d'adresse et [0][-1] sélectionne la dernière adresse de cette liste.
+    addr = socket.getaddrinfo(IPserveur, portTCP)[0][-1] 
+    print(addr) # affiche l'adresse obtenue
+    print(data) # affiche data 
+    s.connect(addr) #  établit une connexion avec le serveur en utilisant l'adresse
+    # Convertit les données (data) en chaîne de caractères,puis les encode en utilisant UTF-8 avant de les envoyer
+    # à travers la connexion TCP à l'aide de la méthode write(). 
+    s.write(str(data).encode()) 
     #s.sendall(str(data).encode())
-    s.close()
+    s.close() # ferme la connexion socket
 
-def envoieUDP(data):
+def envoieUDP(data): #fonction d'envoie TCP
+    # Crée un objet socket s1 spécifiant que l'utilisation sera pour le protocole IPv4 (socket.AF_INET)
+    # et pour le type de socket datagramme (socket.SOCK_DGRAM), ce qui indique l'utilisation d'UDP.
     s1 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    addr = socket.getaddrinfo(IPserveur, portUDP)[0][-1]
-    print(addr)
-    print(data)
+    addr = socket.getaddrinfo(IPserveur, portUDP)[0][-1] # récupération adresse, similaire à la fonction plus au-dessus
+    print(addr)  # affiche l'adresse obtenue
+    print(data)  # affiche data
+    #  Convertit les données (data) en chaîne de caractères, puis les encode en utilisant UTF-8 avant de les envoyer
+    # à l'adresse spécifiée (via le tuple addr) à l'aide de la méthode sendto() de l'objet socket UDP s1.
     s1.sendto(str(data).encode(),addr)
-    s1.close()
+    s1.close() # Ferme la socket UDP après l'envoi des données.
 
-data_to_send = 0
+donnees_a_envoyer = 0
 
 while True:
-    led.value(0)  # Allume la LED pour indiquer l'envoi de données
+    pin.value(0)  # Allume la LED pour indiquer l'envoi de données
 
-    # Envoi des données sur la socket TCP
+    # données transmises sur le socket  TCP
     try:
-        envoieTCP(data_to_send)
+        envoieTCP(donnees_a_envoyer)
     except Exception as e:
-        print("Error sending TCP data:", e)
+        print("Erreur d'envoie donnée TCP:", e)
 
-    # Envoi des données sur la socket UDP
+    # données transmises sur le socket  UDP
     try:
-        envoieUDP(data_to_send)
+        envoieUDP(donnees_a_envoyer)
     except Exception as e:
-        print("Error sending UDP data:", e)
-    led.value(1)
-    time.sleep(0.09)  # Ajoutez un délai en fonction de votre fréquence d'envoi
-    data_to_send += 1
-    if data_to_send>255:
-        data_to_send=0
-      # Éteint la LED
+        print("Erreur d'envoie donnée UDP:", e)
+    pin.value(1) # éteint la LED
+    time.sleep(0.09)  # délai d'envoie
+    donnees_a_envoyer += 1 
+    if donnees_a_envoyer>255:
+        donnees_a_envoyer=0
+      
